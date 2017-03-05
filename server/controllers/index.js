@@ -1,29 +1,34 @@
-var models = require('../models');
+var db = require('../db');
 
 module.exports = {
   messages: {
     get: function (req, res) {
       //use callback for model
-      //get messages from model
-      models.messages.get(function(results, err) {
-        if (err) {
-          throw err;
-        } 
-        res.json(results);
-      });
-      
+      db.Message.findAll({ include: [db.User] })
+        .then(function(results, err) {
+          if (err) {
+            throw err;
+          } 
+          res.json(results);
+        });
     }, // a function which handles a get request for all messages
     post: function (req, res) {
       //send/ post new messages to model
-      var params = [req.body['message'], req.body['username'], req.body['roomname'], new Date()];
+      db.User.findOrCreate({ where: { username: req.body['username'] } })
+        .then(function(user, err) {
+          if (err) {
+            throw err;
+          } 
+          var params = {text: req.body['message'], userid: user.id, roomname: req.body['roomname']};
+          db.Message.findOrCreate({where: params})
+            .then(function(results, err) {
+              if (err) {
+                throw err;
+              } 
+              res.sendStatus(201);
+            });
 
-      models.messages.post(params, function(results, err) {
-        if (err) {
-          throw err;
-        } 
-        res.json(results);
-      });
-
+        });
     } // a function which handles posting a message to the database
   },
 
@@ -31,23 +36,24 @@ module.exports = {
     // Ditto as above
     get: function (req, res) {
       //get users from models
-      models.users.get(function(results, err) {
-        if (err) {
-          throw err;
-        } 
-        res.json(results);
-      });
-
+      db.User.findAll()
+        .then(function(results, err) {
+          if (err) {
+            throw err;
+          } 
+          res.json(results);
+        });
     },
     post: function (req, res) {
       //send/ post new users to model
-      var params = [req.body['username']];
-      models.users.post(params, function(results, err) {
-        if (err) {
-          throw err;
-        } 
-        res.json(results);
-      });
+      var params = {username: req.body['username']};
+      db.User.findOrCreate({ where: params})
+        .then(function(results, err) {
+          if (err) {
+            throw err;
+          } 
+          res.sendStatus(201);
+        });
     }
   }
 };
