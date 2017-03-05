@@ -4,7 +4,7 @@ module.exports = {
   messages: {
     get: function (callback) {
       //get messages from db
-      var queryString = 'SELECT messages.text, messages.roomname FROM messages';
+      var queryString = 'SELECT m.id, m.text, m.roomname FROM messages m LEFT OUTER JOIN users u ON (m.user_id=u.id) ORDER BY m.id desc';
 
       db.query(queryString, function (err, results) {
         if (err) {
